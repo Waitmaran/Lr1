@@ -10,6 +10,13 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.Lr1">
         <service android:name=".MyService" android:foregroundServiceType="camera"/>
+        <receiver android:name=".RestartServiceReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="YouWillNeverKillMe" >
+                </action>
+            </intent-filter>
+        </receiver>
         <activity
             android:name=".MainActivity"
             android:exported="true">

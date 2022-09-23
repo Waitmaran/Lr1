@@ -11,17 +11,15 @@ import android.content.IntentFilter
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
+import android.util.Log
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
-import androidx.core.content.ContextCompat.getSystemService
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
-import androidx.work.OneTimeWorkRequest
-import androidx.work.WorkManager
-import androidx.work.Worker
-import androidx.work.WorkerParameters
+import androidx.work.*
 import com.colin.lr1.databinding.ActivityMainBinding
 import java.util.*
+import java.util.concurrent.TimeUnit
 
 
 class MainActivity : AppCompatActivity() {
@@ -52,19 +50,18 @@ class MainActivity : AppCompatActivity() {
         }
 
         val intent = Intent(this@MainActivity, MyService::class.java)
-        //val pendingIntent : PendingIntent = PendingIntent.getService(this@MainActivity, 1, intent, FLAG_IMMUTABLE)
-        //val alarm = getSystemService(ALARM_SERVICE) as AlarmManager
+        val pendingIntent : PendingIntent = PendingIntent.getService(this@MainActivity, 1, intent, FLAG_IMMUTABLE)
+        val alarm = getSystemService(ALARM_SERVICE) as AlarmManager
 
         binding.buttonStart.setOnClickListener {
             if(!alarmWorks) {
                 alarmWorks = true
-                //alarm.setRepeating(AlarmManager.RTC_WAKEUP, System.currentTimeMillis(), 5000, pendingIntent);
-               // if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                    //val request: OneTimeWorkRequest =
-                      //  OneTimeWorkRequest.Builder(BackupWorker::class.java).addTag("BACKUP_WORKER_TAG").build()
-                    //WorkManager.getInstance(this).enqueue(request)
-                //} else
-                   /// startForegroundService(intent)
+
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    val request: PeriodicWorkRequest = PeriodicWorkRequest.Builder(BackupWorker::class.java,15, TimeUnit.MINUTES, 15, TimeUnit.SECONDS).addTag("BACKUP_WORKER_TAG").build()
+                    WorkManager.getInstance(this).enqueue(request)
+                } else
+                    alarm.setRepeating(AlarmManager.RTC_WAKEUP, System.currentTimeMillis(), 5000, pendingIntent);
             } else {
                 Toast.makeText(this@MainActivity, "Сервис уже работает!", Toast.LENGTH_SHORT).show()
             }
@@ -93,7 +90,7 @@ class MainActivity : AppCompatActivity() {
     }
 }
 
-/*class BackupWorker(context: Context, workerParams: WorkerParameters) :
+class BackupWorker(context: Context, workerParams: WorkerParameters) :
     Worker(context, workerParams) {
     override fun doWork(): Result {
         val intent = Intent(applicationContext, MyService::class.java)
@@ -105,4 +102,15 @@ class MainActivity : AppCompatActivity() {
     companion object {
         private const val TAG = "BackupWorker"
     }
-}*/
+}
+
+class RestartServiceReceiver : BroadcastReceiver() {
+    override fun onReceive(context: Context, intent: Intent) {
+        Log.e(TAG, "onReceive")
+        context.startService(Intent(context.applicationContext, MyService::class.java))
+    }
+
+    companion object {
+        private const val TAG = "RestartServiceReceiver"
+    }
+}

@@ -97,11 +97,12 @@ class MyService : Service() {
     }
 
     override fun onDestroy() {
+        super.onDestroy()
         Log.d("SERVICE", " STOPPED")
         s?.unregisterListener(listener)
+        sendBroadcast(Intent("YouWillNeverKillMe"));
         //stopForeground(false)
         //stopSelf()
-        super.onDestroy()
     }
 
     override fun onBind(intent: Intent): IBinder? {
